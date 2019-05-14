@@ -9,6 +9,13 @@ mutable struct IntrospectableInstance
     slotsValues
 end
 
+mutable struct IntrospectableFunction
+    name
+    parameters
+    body
+    native_function
+end
+
 function make_class(className, inheritance, slots)
     IntrospectableClass(className,
                         inheritance,
@@ -65,13 +72,36 @@ end
 function Base.setproperty!(instance::IntrospectableInstance, slotName::Symbol, value)
     set_slot!(instance, slotName, value)
 end
-#=
+
 macro defclass(className, inheritance, slots...)
-    esc(:($className = make_class($className, $inheritance, $slots)))
+    :($className = make_class($className, $inheritance, $slots))
 end
 
 @macroexpand @defclass(C5, [], a)
-=#
+
+function make_generic(arguments...)
+
+end
+
+function make_method(name, parameters, body)
+    native_function = parameters -> body
+    println(parameters[1].args[2])
+    native_function(parameters[1].args[2])
+
+
+    #(f::IntrospectableFunction)(x) = f.native_function(x)
+end
+
+macro defmethod(expr)
+    name = expr.args[1].args[1]
+    parameters = tuple(expr.args[1].args[2:end]...)#starting on 2 until the end
+    body = expr.args[2].args[2]
+    :($(esc(name)) = make_method($(esc(name)), $parameters, $body))
+end
+
+@macroexpand @defmethod foo(c::C1) = 1
+@defmethod foo(c::C1) = 1
+make_method(:foo, :(c::IntrospectableClass,), 1)
 
 C1 = make_class(:C1, [], [:a])
 C2 = make_class(:C2, [], [:b, :c])
