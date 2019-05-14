@@ -74,7 +74,7 @@ function Base.setproperty!(instance::IntrospectableInstance, slotName::Symbol, v
 end
 
 macro defclass(className, inheritance, slots...)
-    :($className = make_class($className, $inheritance, $slots))
+    :($(esc(className)) = make_class($(QuoteNode(className)), $inheritance, $slots))
 end
 
 @macroexpand @defclass(C5, [], a)
