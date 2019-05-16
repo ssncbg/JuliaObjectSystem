@@ -1,5 +1,5 @@
 # Tests version 0.0
-# Date: May, 14, 2019
+# Date: May, 14, 2019, 11h52
 # Contact catarina.belem[at]tecnico.ulisboa.pt for any question regarding the tests
 
 # This file should be placed in the same directory as the JOS.jl. Alternatively,
@@ -26,8 +26,8 @@ macro assert(expr)
     end
 end
 
-slot_error(slot_name, type_error) = "ERROR: Slot $(slot_name) is $(type_error)"
-method_error() = "ERROR: No applicable method"
+slot_error(slot_name, type_error) = "Slot $(slot_name) is $(type_error)"
+method_error() = "No applicable method"
 
 test_error(f, error) =
     try f()
@@ -37,7 +37,7 @@ test_error(f, error) =
     end
 
 # -------------------------------------------------------------------------
-#                          Tests
+#                               Tests
 # -------------------------------------------------------------------------
 # Every @assert is consider to be a single instance of a test.
 # This script is intended to be run sequentially. Due to the use of global
@@ -53,8 +53,8 @@ Researcher = make_class(:Researcher, [], [:group]);
 @defclass(Student, [Person], course);
 @defclass(Sportsman, [], activity, schedule);
 
-@defclass(IstStudent, [Student, Sportsman], []);
-@defclass(PhdStudent, [IstStudent, Researcher], []);
+@defclass(IstStudent, [Student, Sportsman]);
+@defclass(PhdStudent, [IstStudent, Researcher]);
 
 # ------------------------------------------------------------------------------
 
@@ -96,22 +96,18 @@ m2.name = "Maria João";
 @assert what_do_you_do(make_instance(PhdStudent,
                         :group => "ADA",
                         :name => "Renata",
-                        :course => "Advanced Programming")) == "I do experiments and research at ADA! But not in rats!" # Test 14
-@assert what_do_you_do(make_instance(PhdStudent,
-                        :group => "ADA",
-                        :name => "Renata",
-                        :course => "Advanced Programming")) == "I, Renata, just breathe!" # Test 15
+                        :course => "Advanced Programming")) == "I, Renata, just breathe!" # Test 14
 
 # ------------------------------------------------------------------------------
 
 @defmethod what_do_you_do(p::Student) = "I study $(p.course)! This is incredibly complex!";
 @assert what_do_you_do(make_instance(IstStudent,
                         :name => "Inês",
-                        :course => "Advanced Programming")) == "I study Advanced Programming! This is incredibly complex!" # Test 16
+                        :course => "Advanced Programming")) == "I study Advanced Programming! This is incredibly complex!" # Test 15
 @assert what_do_you_do(make_instance(PhdStudent,
                         :group => "ADA",
                         :name => "Renata",
-                        :course => "Advanced Programming")) == "I study Advanced Programming! This is incredibly complex!" # Test 17
+                        :course => "Advanced Programming")) == "I study Advanced Programming! This is incredibly complex!" # Test 16
 
 # ------------------------------------------------------------------------------
 
@@ -126,12 +122,12 @@ s1 = make_instance(Sportsman, :activity => "Synchronized Swimming");
 ist1 = make_instance(IstStudent, :name=>"Edmond", :course=>"AI");
 ist2 = make_instance(IstStudent, :course=>"Advanced Programming", :name=>"Martia");
 
-@assert work_on_project(p1, s1) == "Anna is watching a young adult playing Synchronized Swimming instead of working on the project."  # Test  18
-@assert test_error(() -> work_on_project(s1, p1), method_error())   # Test 19
-@assert work_on_project(p1, ist1) == "Anna is watching the IST Student, Edmond, studying and doing the project of the course AI..." # Test 20
-@assert work_on_project(ist1, p1) == "The IST Student Edmond is studying and doing the project and Anna is watching..."   # Test 21
+@assert work_on_project(p1, s1) == "Anna is watching a young adult playing Synchronized Swimming instead of working on the project."  # Test  17
+@assert test_error(() -> work_on_project(s1, p1), method_error())   # Test 18
+@assert work_on_project(p1, ist1) == "Anna is watching the IST Student, Edmond, studying and doing the project of the course AI..." # Test 19
+@assert work_on_project(ist1, p1) == "The IST Student Edmond is studying and doing the project and Anna is watching..."   # Test 20
 
-@assert work_on_project(ist1, ist2) == "Both Edmond and Martia are working on the project!" # Test 22
+@assert work_on_project(ist1, ist2) == "Both Edmond and Martia are working on the project!" # Test 21
 
 # Print total counts of failed tests
 println(">> Failed $(nfailed)/$(ntests) tests\n - Failed tests: $(join(tests_failed, ", "))")
