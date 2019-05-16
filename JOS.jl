@@ -99,14 +99,25 @@ macro defmethod(expr)
 
     types = []
     parameters = []
+    native_function = "("
+
     variables = expr.args[1].args[2:end]
     for var in variables
-        push!(parameters, var.args[1])
+        #push!(parameters, var.args[1])
+        native_function = string(native_function, var.args[1] , ",")
         push!(types, var.args[2])
     end
 
-    :(push!($(esc(name)).methods, make_method($(QuoteNode(name)), $(tuple(types...)), $(esc(parameters...)) -> $(esc(body)))))
+    native_function = string(native_function, ") -> " , body)
+    native_function = Meta.parse(native_function)
+
+    types = tuple(types...)
+
+    :(push!($(esc(name)).methods, make_method($(QuoteNode(name)), $types, $(esc(native_function)))))
 end
+
+@defgeneric foo(c)
+@macroexpand @defmethod foo(c::C2, d::C2) = c.b + d.b
 
 function is_super_class(class::Class, name)
     for c in class.super
@@ -150,10 +161,6 @@ end
         i += 1
     end
 
-    for method in methods
-
-    end
-
     return methods[1].native_function(instances...)
 end
 
@@ -182,7 +189,9 @@ c3i2.a
 @defgeneric foo(c)
 @defmethod foo(c::C1) = 1
 @defmethod foo(c::C2) = c.b
+@defgeneric bar(c,d)
+@defmethod bar(c::C2, d::C3) = c.b + d.b
 
 foo(make_instance(C1))
-foo(make_instance(C2, :b=>42))
+bar(make_instance(C2, :b=>42), make_instance(C3, :b=>42))
 =#
