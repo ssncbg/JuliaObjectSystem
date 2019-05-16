@@ -37,7 +37,7 @@ function make_instance(class, values...)
         if haskey(slots_values, slot)
             slots_values[slot] = value
         else
-            println("ERROR: Slot $(slot) is missing")
+            error("ERROR: Slot $(slot) is missing")
         end
     end
 
@@ -51,9 +51,9 @@ function get_slot(instance, slot)
     slots_values = getfield(instance, :slots_values)
     if haskey(slots_values, slot)
         value = slots_values[slot]
-        value === nothing ? println("ERROR: Slot $(slot) is unbound") : value
+        value === nothing ? error("ERROR: Slot $(slot) is unbound") : value
     else
-        println("ERROR: Slot $(slot) is missing")
+        error("ERROR: Slot $(slot) is missing")
     end
 end
 
@@ -62,7 +62,7 @@ function set_slot!(instance, slot, value)
     if haskey(slots_values, slot)
         slots_values[slot] = value
     else
-        println("ERROR: Slot $slot is missing")
+        error("ERROR: Slot $slot is missing")
     end
 end
 
