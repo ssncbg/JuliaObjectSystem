@@ -19,7 +19,6 @@ function make_class(name, super, slots)
     end
     append!(slt, slots)
 
-    println(spr)
     Class(name, tuple(spr...), tuple(slt...))
 end
 
