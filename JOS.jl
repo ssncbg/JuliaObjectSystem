@@ -11,14 +11,15 @@ end
 
 function make_class(name, super, slots)
     slt = []
-    spr = super
+    spr = []
     for class in super
         append!(slt, class.slots)
+        push!(spr, class)
         append!(spr, class.super)
     end
     append!(slt, slots)
-    #append!(spr, super)
 
+    println(spr)
     Class(name, tuple(spr...), tuple(slt...))
 end
 
@@ -115,19 +116,38 @@ macro defmethod(expr)
 
     :(push!($(esc(name)).methods, make_method($(QuoteNode(name)), $types, $(esc(native_function)) -> $(esc(body)))))
 end
-#=
-@defgeneric foo(c)
-@macroexpand@defmethod foo(c::C2) = "I do experiments and research at $(c.b)! But not in rats!"
-@defmethod foo(c::C2) = "I do experiments and research at $(c.b)! But not in rats!"
-=#
-function is_super_class(class::Class, name)
-    for c in class.super
-        if c.name === name
-            return true
+
+function effectiveMethod(inputParameters, inputClasses,  inputMethods)
+    methods = inputMethods
+
+    i = 1
+    for parameter in inputParameters
+        matchmethods = []
+
+        for m in methods
+            if parameter === m.parameters[i]
+                push!(matchmethods, m)
+            end
         end
+
+        classes = inputClasses[i].super
+        for  class in classes
+            for m in methods
+                if class.name === m.parameters[i]
+                    push!(matchmethods, m)
+                end
+            end
+        end
+
+        if length(matchmethods) == 0
+            return error("No applicable method")
+        end
+
+        methods = matchmethods
+        i += 1
     end
 
-    return false
+    return methods
 end
 
 (f::Generic)(args...) = begin
@@ -143,59 +163,5 @@ end
     end
     parameters = tuple(parameters...)
 
-    i = 1
-    methods = f.methods
-
-    for parameter in parameters
-        matchmethods = []
-        for m in methods
-            if parameter === m.parameters[i]
-                push!(matchmethods, m)
-            elseif is_super_class(classes[i], m.parameters[i])
-                push!(matchmethods, m)
-            end
-        end
-
-        if length(matchmethods) == 0
-            return error("No applicable method")
-        end
-
-        methods = matchmethods
-        i += 1
-    end
-
-    return methods[1].native_function(instances...)
+    return effectiveMethod(parameters, classes, f.methods)[1].native_function(instances...)
 end
-#=
-C1 = make_class(:C1, [], [:a])
-C2 = make_class(:C2, [], [:b, :c])
-C3 = make_class(:C3, [C1, C2], [:d])
-
-@defclass(C1, [], a)
-@defclass(C2, [], b, c)
-@defclass(C3, [C1, C2], d)
-
-c3i1 = make_instance(C3, :a=>1, :b=>2, :c=>3, :d=>4)
-c3i2 = make_instance(C3, :b=>2)
-
-get_slot(c3i2, :b)
-set_slot!(c3i2, :b, 3)
-println([get_slot(c3i1, s) for s in [:a, :b, :c]])
-#=
-c3i1.a
-c3i1.e
-c3i2.a
-c3i2.a = 5
-c3i2.a
-=#
-@defgeneric foo(c)
-@defmethod foo(c::C1) = 1
-@defmethod foo(c::C2) = c.b
-@defgeneric bar(c,d)
-@defmethod bar(c::C2, d::C3) = c.b + d.b
-
-foo(make_instance(C1))
-foo(make_instance(C2, :b=>42))
-bar(make_instance(C2, :b=>42), make_instance(C3, :b=>42))
-bar(c3i1, c3i2)
-=#
