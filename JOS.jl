@@ -108,17 +108,18 @@ macro defmethod(expr)
         push!(types, var.args[2])
     end
 
-    native_function = string(native_function, ") -> " , body)
+    native_function = string(native_function, ")")
     native_function = Meta.parse(native_function)
 
     types = tuple(types...)
 
-    :(push!($(esc(name)).methods, make_method($(QuoteNode(name)), $types, $(esc(native_function)))))
+    :(push!($(esc(name)).methods, make_method($(QuoteNode(name)), $types, $(esc(native_function)) -> $(esc(body)))))
 end
-
+#=
 @defgeneric foo(c)
-@macroexpand @defmethod foo(c::C2, d::C2) = c.b + d.b
-
+@macroexpand@defmethod foo(c::C2) = "I do experiments and research at $(c.b)! But not in rats!"
+@defmethod foo(c::C2) = "I do experiments and research at $(c.b)! But not in rats!"
+=#
 function is_super_class(class::Class, name)
     for c in class.super
         if c.name === name
@@ -148,7 +149,9 @@ end
     for parameter in parameters
         matchmethods = []
         for m in methods
-            if (parameter === m.parameters[i] || is_super_class(classes[i], m.parameters[i]))
+            if parameter === m.parameters[i]
+                push!(matchmethods, m)
+            elseif is_super_class(classes[i], m.parameters[i])
                 push!(matchmethods, m)
             end
         end
@@ -163,7 +166,6 @@ end
 
     return methods[1].native_function(instances...)
 end
-
 #=
 C1 = make_class(:C1, [], [:a])
 C2 = make_class(:C2, [], [:b, :c])
@@ -179,13 +181,13 @@ c3i2 = make_instance(C3, :b=>2)
 get_slot(c3i2, :b)
 set_slot!(c3i2, :b, 3)
 println([get_slot(c3i1, s) for s in [:a, :b, :c]])
-
+#=
 c3i1.a
 c3i1.e
 c3i2.a
 c3i2.a = 5
 c3i2.a
-
+=#
 @defgeneric foo(c)
 @defmethod foo(c::C1) = 1
 @defmethod foo(c::C2) = c.b
@@ -193,5 +195,7 @@ c3i2.a
 @defmethod bar(c::C2, d::C3) = c.b + d.b
 
 foo(make_instance(C1))
+foo(make_instance(C2, :b=>42))
 bar(make_instance(C2, :b=>42), make_instance(C3, :b=>42))
+bar(c3i1, c3i2)
 =#
